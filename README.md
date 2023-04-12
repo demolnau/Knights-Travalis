@@ -1,5 +1,6 @@
 # Knights-Travalis
 Knights Travalis Odin Javascript Project 
+
     create a function knightMoves() - shows the shortest possible way to get from one square to another by outputting all squares the knight will stop on along the way
 
 Requirements: 
