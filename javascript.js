@@ -1,8 +1,10 @@
-function Square(x,y){
-        const posX=x;
-        const posY=y;
+function Square(posX,posY){
+        //const posX=x;
+        //const posY=y;
         const position = [posX,posY]
-    return{posX,posY,position}
+        const children = null;
+        //const parent = null;
+    return{position, children}
     }
 function Gameboard() {
         let positions=[];
@@ -29,11 +31,18 @@ function Knight(starting_position_x, starting_position_y){
         let possible_positions = [];
         let movement = [[-2,+1],[-1,+2],[+1,+2],[+2,+1],[-2,-1],[-1,-2],[+1,-2],[+2,-1]]
         for (let i=0;i<movement.length;i++){
-            let newX = given_position.posX + movement[i][0];
-            let newY = given_position.posY + movement[i][1];
+            let newX = given_position.position[0] + movement[i][0];
+            let newY = given_position.position[1] + movement[i][1];
             //let new_pos = [newX,newY];
-            possible_positions.push(Square(newX,newY))
+            if(newX>-1 && newX<8){
+                if(newY>-1 && newY<8){
+                    possible_positions.push(Square(newX,newY))
+                }
+            }
         }
+        given_position.children = possible_positions.flat(1);
+        //console.log(given_position)
+        console.log(`there are ${possible_positions.length} available from the current position`)
         return possible_positions.flat(1);
     }
 
@@ -47,14 +56,13 @@ function Knight(starting_position_x, starting_position_y){
                 match_found = true
                 this.current_position = Square(possibleX,possibleY);
                 this.possible_positions = calculate_possible_moves(this.current_position)
+                //this.current_position.children=this.possible_positions;
                 this.path = track_moves(this.current_position)
             }
         }
         if(match_found == false){
             console.log("That is an illegal move.")
         }
-        
-        
         return this.current_position;
     }
     
@@ -64,12 +72,104 @@ function Knight(starting_position_x, starting_position_y){
         return path
     }
 
+
+
     //make the possible moves into a tree
     //find the shortest path possible between a starting position and an ending position. 
+    function breadth_first_search(start = this.starting_position, end){
+        //const visited = new Map();
+        const queue =[start];
+        var breadth_first = [];
+        end.children = calculate_possible_moves(end)
+        //console.log("we are looking for position : " + JSON.stringify(end.position))
+        //var ending_position = end
+        console.log(queue)
+        while(queue.length!=0){
+            var current_node = queue.shift(); //removes from front of array
+            current_node.children=calculate_possible_moves(current_node)
+            if(current_node==start){
+                console.log("first node in visited")
+                breadth_first.push(current_node) //adds to the end of the array
+            }
+            else{
+                if(find_a_match(breadth_first,end)==false){
+                    console.log(`breadth search does not contain end position yet`)
+                    breadth_first.push(current_node) //adds to the end of the array
+                    console.log(breadth_first.length)
+                }
+            }
+            
+            if(JSON.stringify(current_node.position)!=JSON.stringify(end.position)){
+                if(current_node.children!=null){
+                    for(let i = 0; i<current_node.children.length;i++){
+                        //current_node.children[i].parent = current_node;
+                        queue.push(current_node.children[i])
+                    }
+                }
+            }
+            else{
+                console.log(`FINISHED SEARCH AFTER ${breadth_first.length} NODES`)
+                
+                return breadth_first;
+            }
+              
+              
+        }
+    }
 
+    function find_a_match(arr,node_of_interest){
+        for(let i=0; i<arr.length;i++){
+            //console.log(JSON.stringify(arr[i].position) == JSON.stringify(node_of_interest.position))
+            if(JSON.stringify(arr[i].position) == JSON.stringify(node_of_interest.position)){
+                //console.log("MATCH")
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+    }
 
-    return{starting_position, current_position, possible_positions, calculate_possible_moves, move_piece_to}
+    // function depth_first_search(start = this.starting_position, end){
+    //     const stack =[start];
+    //     var depth_first = [];
+    //     end.children = calculate_possible_moves(end)
+    //     while(stack!=0){
+    //         var current_node = stack.pop(); //removes from back of array
+    //         current_node.children=calculate_possible_moves(current_node)
+    //         if(current_node==start){
+    //             console.log("first node in visited")
+    //             depth_first.push(current_node) //adds to the end of the array
+    //         }
+    //         else{
+    //             if(find_a_match(depth_first,end)==false){
+    //                 console.log(`breadth search does not contain end position yet`)
+    //                 depth_first.push(current_node) //adds to the end of the array
+    //                 console.log(depth_first.length)
+    //             }
+    //         }
+            
+    //         if(JSON.stringify(current_node.position)!=JSON.stringify(end.position)){
+    //             if(current_node.children!=null){
+    //                 for(let i = 0; i<current_node.children.length;i++){
+    //                         stack.push(current_node.children[i])
+    //                 }
+    //             }
+    //         }
+    //         else{
+    //             console.log(`FINISHED SEARCH AFTER ${depth_first.length} NODES`)
+    //             return depth_first;
+    //         }
+
+    //     }
+    // }
+
+    return{starting_position, current_position, possible_positions, calculate_possible_moves, move_piece_to, breadth_first_search}
 }
+
+
+
+
 //testing
 //const my_square = Square(4,4)
 //console.log(my_square)
@@ -79,11 +179,10 @@ const my_knight = Knight(4,4)
 //console.log("current position of knight before movement: " + JSON.stringify(my_knight.current_position))
 //console.log("possible positions from initial position:  "+ JSON.stringify(my_knight.possible_positions))
 
-my_knight.move_piece_to(3,6)
-
+//my_knight.move_piece_to(3,6)
 //console.log("current position of knight after move : " + JSON.stringify(my_knight.current_position))
-// console.log("possible positions after move:  "+ JSON.stringify(my_knight.possible_positions))
- my_knight.move_piece_to(5,7)
+//console.log("possible positions after move:  "+ JSON.stringify(my_knight.possible_positions))
+// my_knight.move_piece_to(5,7)
 // console.log("Knight's path thus far: " + JSON.stringify(my_knight.path))
 // console.log("possible positions after move:  "+ JSON.stringify(my_knight.possible_positions))
 // console.log("now lets try an illegal move")
@@ -91,5 +190,10 @@ my_knight.move_piece_to(3,6)
 // console.log("Knight's path thus far: " + JSON.stringify(my_knight.path)) //notice there is not repeat
 // my_knight.move_piece_to(7,7)
 //console.log("Knight's path thus far: " + JSON.stringify(my_knight.path)) //notice nothing is added
-//my_knight.move_piece_to(3,8)
- console.log("Knight's path thus far: " + JSON.stringify(my_knight.path)) 
+//my_knight.move_piece_to(7,6)
+//console.log("possible positions after move:  "+ JSON.stringify(my_knight.possible_positions))
+//console.log("Knight's path thus far: " + JSON.stringify(my_knight.path[1])) 
+
+const end_position = new Square(5,7)
+console.log(my_knight.breadth_first_search(this.starting_position,end_position))
+//console.log(my_knight.depth_first_search(this.starting_position,end_position))
