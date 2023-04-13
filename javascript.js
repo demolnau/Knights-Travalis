@@ -3,8 +3,10 @@ function Square(posX,posY){
         //const posY=y;
         const position = [posX,posY]
         const children = null;
+        const level = 0 ;
+        const previous = null;
         //const parent = null;
-    return{position, children}
+    return{position, children, level, previous}
     }
 function Gameboard() {
         let positions=[];
@@ -36,7 +38,10 @@ function Knight(starting_position_x, starting_position_y){
             //let new_pos = [newX,newY];
             if(newX>-1 && newX<8){
                 if(newY>-1 && newY<8){
-                    possible_positions.push(Square(newX,newY))
+                    var newSquare = Square(newX,newY)
+                    newSquare.level = given_position.level + 1;
+                    newSquare.previous = given_position.position;
+                    possible_positions.push(newSquare)
                 }
             }
         }
@@ -77,25 +82,26 @@ function Knight(starting_position_x, starting_position_y){
     //make the possible moves into a tree
     //find the shortest path possible between a starting position and an ending position. 
     function breadth_first_search(start = this.starting_position, end){
-        //const visited = new Map();
         const queue =[start];
-        var breadth_first = [];
-        end.children = calculate_possible_moves(end)
-        //console.log("we are looking for position : " + JSON.stringify(end.position))
-        //var ending_position = end
-        console.log(queue)
+        const visited = new Map()
+        var counter = 0;
+
         while(queue.length!=0){
             var current_node = queue.shift(); //removes from front of array
             current_node.children=calculate_possible_moves(current_node)
             if(current_node==start){
                 console.log("first node in visited")
-                breadth_first.push(current_node) //adds to the end of the array
+                visited.set(counter, current_node)
+                //breadth_first.push(current_node) //adds to the end of the array
             }
             else{
-                if(find_a_match(breadth_first,end)==false){
-                    console.log(`breadth search does not contain end position yet`)
-                    breadth_first.push(current_node) //adds to the end of the array
-                    console.log(breadth_first.length)
+                if(find_index(visited,current_node)==-1){
+                    //console.log(`breadth search does not contain end position yet`)
+                    counter= counter+1;
+                    console.log(counter)
+                    visited.set(counter, current_node)
+                    //breadth_first.push(current_node) //adds to the end of the array
+                    //console.log(breadth_first.length)
                 }
             }
             
@@ -108,27 +114,40 @@ function Knight(starting_position_x, starting_position_y){
                 }
             }
             else{
-                console.log(`FINISHED SEARCH AFTER ${breadth_first.length} NODES`)
-                
-                return breadth_first;
+                console.log(`FINISHED SEARCH AFTER ${visited.size} NODES`)
+                return visited;
             }
-              
-              
         }
     }
 
-    function find_a_match(arr,node_of_interest){
-        for(let i=0; i<arr.length;i++){
-            //console.log(JSON.stringify(arr[i].position) == JSON.stringify(node_of_interest.position))
-            if(JSON.stringify(arr[i].position) == JSON.stringify(node_of_interest.position)){
-                //console.log("MATCH")
-                return true;
-            }
-            else{
-                return false;
-            }
+    function find_index(map, node_of_interest){
+        let num =-1;
+        for (const [key,value] of map.entries()){
+            if(JSON.stringify(value.position) == JSON.stringify(node_of_interest.position)){
+                num=key;
+                }
         }
+        return num;
     }
+
+        function get_path(map){
+            var index_of_interest = map.size-1;
+            var last = map.get(index_of_interest)
+            var current = last;
+            var parents=[last];
+
+            for(let i=last.level ; i>0; i--){
+                parent_position = new Square(current.previous[0],current.previous[1])
+                index_of_interest = find_index(map, parent_position);
+                current=map.get(index_of_interest)
+                parents.unshift(current)
+            }
+            console.log(parents)
+            
+            return parents;
+        }
+
+    //function height(){}
 
     // function depth_first_search(start = this.starting_position, end){
     //     const stack =[start];
@@ -142,7 +161,7 @@ function Knight(starting_position_x, starting_position_y){
     //             depth_first.push(current_node) //adds to the end of the array
     //         }
     //         else{
-    //             if(find_a_match(depth_first,end)==false){
+    //             if(find_index(depth_first,end)==-1){
     //                 console.log(`breadth search does not contain end position yet`)
     //                 depth_first.push(current_node) //adds to the end of the array
     //                 console.log(depth_first.length)
@@ -164,7 +183,7 @@ function Knight(starting_position_x, starting_position_y){
     //     }
     // }
 
-    return{starting_position, current_position, possible_positions, calculate_possible_moves, move_piece_to, breadth_first_search}
+    return{starting_position, current_position, possible_positions, calculate_possible_moves, move_piece_to, breadth_first_search, find_index, get_path}
 }
 
 
@@ -193,7 +212,16 @@ const my_knight = Knight(4,4)
 //my_knight.move_piece_to(7,6)
 //console.log("possible positions after move:  "+ JSON.stringify(my_knight.possible_positions))
 //console.log("Knight's path thus far: " + JSON.stringify(my_knight.path[1])) 
+const start = new Square(4,4)
+const wild = new Square(7,7)
+const mystery_position  =  new Square(3,6)
+const end_position = new Square(7,6)
+const depth_first_arr = my_knight.breadth_first_search(this.starting_position,end_position)
+//console.log(my_knight.find_index(depth_first_arr, start))
 
-const end_position = new Square(5,7)
-console.log(my_knight.breadth_first_search(this.starting_position,end_position))
+
+// for(const [key,value] of depth_first_arr.entries()){
+//     console.log(`${key} =  ${value.position}`)
+// }
 //console.log(my_knight.depth_first_search(this.starting_position,end_position))
+my_knight.get_path(depth_first_arr)
